@@ -100,6 +100,44 @@ function cloudSVG(w = 150) {
 </svg>`;
 }
 
+/* balloon obstacle — body centred high, string hangs below */
+const BALLOON_COLORS = [
+  ['#FF8A94', '#FF5B70', '#D93A50'],   // red
+  ['#FFD97A', '#FFC23D', '#E8A62B'],   // yellow
+  ['#8FD6FF', '#5CB8F0', '#3E9FD4'],   // blue
+  ['#D9A8FF', '#C58BFF', '#9A5CE0']    // purple
+];
+function balloonSVG(w = 120) {
+  const u = 'b' + (++uid);
+  const [c1, c2, c3] = BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)];
+  return `
+<svg viewBox="0 0 120 150" width="${w}" aria-hidden="true">
+  <defs>
+    <radialGradient id="${u}bg" cx="36%" cy="26%" r="78%">
+      <stop offset="0" stop-color="${c1}"/><stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/>
+    </radialGradient>
+  </defs>
+  <path d="M60 108 Q50 122 60 134 Q68 144 58 158" fill="none" stroke="#B9A2AC" stroke-width="2.4" stroke-linecap="round"/>
+  <ellipse cx="60" cy="50" rx="43" ry="50" fill="url(#${u}bg)"/>
+  <ellipse cx="45" cy="30" rx="12" ry="17" fill="#FFFFFF" opacity=".38"/>
+  <path d="M52 99 L68 99 L60 111 Z" fill="${c3}"/>
+</svg>`;
+}
+
+/* little bird obstacle — faces the kite (left), wing flaps via CSS */
+function birdSVG(w = 120) {
+  return `
+<svg viewBox="0 0 140 100" width="${w}" aria-hidden="true">
+  <path d="M100 46 L124 36 L114 58 Z" fill="#4FA8DF"/>
+  <ellipse cx="70" cy="54" rx="31" ry="24" fill="#6FC6F5"/>
+  <ellipse cx="78" cy="62" rx="15" ry="10" fill="#EAF7FF" opacity=".9"/>
+  <path d="M40 52 L24 58 L40 64 Z" fill="#FFB13B"/>
+  <g class="wing"><path d="M62 42 Q88 12 106 34 Q86 48 62 48 Z" fill="#4FA8DF"/></g>
+  <circle cx="56" cy="47" r="5.5" fill="#2B2226"/>
+  <circle cx="58" cy="45" r="2" fill="#fff"/>
+</svg>`;
+}
+
 /* small puffy background cloud */
 function bgCloudSVG(w = 90) {
   return `
@@ -110,6 +148,28 @@ function bgCloudSVG(w = 90) {
     <ellipse cx="92" cy="42" rx="22" ry="13"/>
   </g>
 </svg>`;
+}
+
+/* kite handwheel (手摇轮) — rim is static, spokes + crank rotate via .mg-reel-rot */
+function reelSVG(u) {
+  return `
+  <!-- kite handwheel: rim, rotating spokes + crank, hand on the hub -->
+  <g class="mg-reel">
+    <circle cx="395" cy="178" r="54" fill="#F6E3BC" opacity=".3"/>
+    <circle cx="395" cy="178" r="54" fill="none" stroke="#C98A4B" stroke-width="13"/>
+    <circle cx="395" cy="178" r="54" fill="none" stroke="#A96B33" stroke-width="3" stroke-dasharray="5 12" opacity=".55"/>
+    <g class="mg-reel-rot">
+      <g stroke="#A96B33" stroke-width="8" stroke-linecap="round">
+        <path d="M395 178 L395 126"/><path d="M395 178 L447 178"/>
+        <path d="M395 178 L395 230"/><path d="M395 178 L343 178"/>
+      </g>
+      <path d="M395 120 L395 92" stroke="#8A5A2B" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="395" cy="88" r="12" fill="#FFCB3D" stroke="#B4763C" stroke-width="3"/>
+    </g>
+    <circle cx="395" cy="178" r="14" fill="#B4763C"/>
+    <circle cx="395" cy="178" r="22" fill="url(#${u}g)"/>
+    <circle cx="386" cy="170" r="6" fill="#fff" opacity=".35"/>
+  </g>`;
 }
 
 /* momo body — includes both mouth states + hit sparks, driven by data-mood */
@@ -207,25 +267,25 @@ function momoBodySVG(raiseArm = false) {
     <circle cx="52" cy="358" r="21"/>
     ${raiseArm ? `<circle cx="395" cy="178" r="23"/>` : `<circle cx="348" cy="358" r="21"/>`}
   </g>
+
+  ${raiseArm ? reelSVG(u) : ''}
 </svg>`;
 }
 
 /* start-page illustration: momo holding the kite, string included */
 function momoKiteSVG() {
   return `
-<svg viewBox="0 0 520 660" aria-hidden="true">
+<svg viewBox="0 0 505 620" aria-hidden="true">
   <g class="k-sway">
-    <g class="k-bob">
-      <g transform="translate(300 0)">${kiteSVG(172, false).replace(/<svg[^>]*>|<\/svg>/g, '')}</g>
-    </g>
-    <!-- string: hand → kite tail -->
-    <path d="M423 331 Q432 230 388 132" fill="none" stroke="#9A8791" stroke-width="2.8" stroke-linecap="round" opacity=".8"/>
+    <g transform="translate(300 0)">${kiteSVG(172, false).replace(/<svg[^>]*>|<\/svg>/g, '')}</g>
+    <!-- string: handwheel rim → kite tail -->
+    <path d="M401 267 Q412 195 380 118" fill="none" stroke="#9A8791" stroke-width="2.8" stroke-linecap="round" opacity=".8"/>
     <g fill="#FFD04D" stroke="#E8A62B" stroke-width="1.2">
-      <path d="M413 246 l15 -5 -3 15 z"/>
-      <path d="M403 196 l15 -5 -3 15 z" fill="#4FC26B" stroke="#36A052"/>
+      <path d="M403 216 l15 -5 -3 15 z"/>
+      <path d="M395 164 l15 -5 -3 15 z" fill="#4FC26B" stroke="#36A052"/>
     </g>
   </g>
-  <g transform="translate(28 156)">${momoBodySVG(true)}</g>
+  <g transform="translate(6 150)">${momoBodySVG(true).replace(/<svg[^>]*>|<\/svg>/g, '')}</g>
 </svg>`;
 }
 
@@ -408,7 +468,8 @@ const goMonster = $('#goMonster');
 const kite = { y: 0, lane: 1, tilt: 0, x: 0 };   // lane 0 = top, 1 = bottom
 let takeoff = 0;                                 // 1 → 0 while the kite flies in from the left
 const LANE = [.27, .73];                    // fraction of field height
-let clouds = [];
+let obstacles = [];
+let reelAngle = 0;                          // handwheel rotation follows kite movement
 let spawnT = 1.2;
 let invT = 0, cheerT = 0, overT = 0;
 let fieldW = 0, fieldH = 0, KX = 0;
@@ -429,8 +490,9 @@ function startPlay() {
 }
 
 function resetGame() {
-  clouds.forEach(c => c.el.remove());
-  clouds = [];
+  obstacles.forEach(o => o.el.remove());
+  obstacles = [];
+  reelAngle = 0;
   S.hearts = 3; S.score = 0; spawnT = 1.4; invT = 0; cheerT = 0; overT = 0;
   kite.lane = 1; kite.y = fieldH * LANE[1]; kite.tilt = 0; kite.x = KX;
   takeoff = 1;
@@ -458,20 +520,49 @@ function buildBgClouds() {
   }
 }
 
-function spawnCloud() {
+function spawnObstacle() {
   const lane = Math.random() < .5 ? 0 : 1;
-  const w = rnd(130, 175);
+  const r = Math.random();
+  const type = r < .45 ? 'cloud' : r < .74 ? 'balloon' : 'bird';
   const el = document.createElement('div');
-  el.className = 'cloud';
-  el.innerHTML = cloudSVG(w);
+  el.className = 'ob ' + type;
+  el.dataset.type = type;
+
+  let w, html, oy = 0, cw, ch, spd = 1;
+  if (type === 'cloud') {
+    w = rnd(130, 175);
+    html = cloudSVG(w);
+    cw = w * .40; ch = w * .58 * .30;
+  } else if (type === 'balloon') {
+    w = rnd(112, 148);
+    html = balloonSVG(w);
+    oy = w * .105;                // balloon body sits above the box centre (string below)
+    cw = w * .32; ch = w * .40;
+    spd = .85;
+  } else {
+    w = rnd(108, 140);
+    html = birdSVG(w);
+    cw = w * .26; ch = w * .22;
+    spd = 1.14;
+  }
+  el.innerHTML = html;
   cloudsEl.appendChild(el);
-  const c = { x: fieldW + w, lane, w, h: w * .58, el, scored: false, hit: false };
-  clouds.push(c);
+  const c = { type, x: fieldW + w, lane, w, oy, cw, ch, spd,
+              phase: rnd(0, Math.PI * 2), el, scored: false, hit: false };
+  obstacles.push(c);
+  placeOb(c);
 }
 
-function placeCloud(c) {
+function bobOf(c, ts) {
+  if (ts == null) return 0;
+  if (c.type === 'balloon') return Math.sin(ts / 1000 * 1.7 + c.phase) * 15;
+  if (c.type === 'bird')    return Math.sin(ts / 1000 * 3.1 + c.phase) * 9;
+  return 0;
+}
+
+function placeOb(c, ts = null) {
   c.el.style.left = c.x + 'px';
-  c.el.style.top = laneY(c.lane) + 'px';
+  c.el.style.top = (laneY(c.lane) + c.oy + bobOf(c, ts)) + 'px';
 }
 
 /* ---------- flow ---------- */
@@ -605,6 +696,12 @@ function gameStep(dt, ts) {
   const vy = (dest - kite.y);
   kite.tilt = clamp(vy * .10, -17, 17);
 
+  /* handwheel rolls as the kite climbs / sinks */
+  reelAngle += (kite.y - prevY) * .6;
+  const reelRot = momoEl.querySelector('.mg-reel-rot');
+  if (reelRot) reelRot.setAttribute('transform',
+    `rotate(${(reelAngle % 360).toFixed(1)} 395 178)`);
+
   /* kite element — x eases in from the left when a run starts */
   if (takeoff > 0) takeoff = Math.max(0, takeoff - dt * 1.6);
   kite.x = KX - fieldW * .26 * takeoff * takeoff;
@@ -623,7 +720,7 @@ function gameStep(dt, ts) {
   const hr = handAnchor.getBoundingClientRect();
   const hx = hr.left - fr.left, hy = hr.top - fr.top;
   const kxp = kite.x, kyp = kite.y + 49;
-  const mx = (hx + kxp) / 2 + 8, my = (hy + kyp) / 2 + 34;
+  const mx = (hx + kxp) / 2 + 10, my = (hy + kyp) / 2 + 8;
   stringPath.setAttribute('d', `M ${hx.toFixed(1)} ${hy.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${kxp.toFixed(1)} ${kyp.toFixed(1)}`);
 
   if (!S.playing) return;
@@ -635,22 +732,22 @@ function gameStep(dt, ts) {
   /* spawn */
   spawnT -= dt;
   if (spawnT <= 0) {
-    spawnCloud();
+    spawnObstacle();
     const base = Math.max(.85, 1.55 - S.score * .02);
     spawnT = rnd(base, base + .5);
   }
 
-  /* move clouds */
+  /* move obstacles */
   const speed = Math.min(460, 250 + S.score * 6);
   const khw = 40, khh = 36;
-  for (const c of clouds) {
+  for (const c of obstacles) {
     if (c.hit) continue;
-    c.x -= speed * dt;
-    placeCloud(c);
+    c.x -= speed * dt * c.spd;
+    placeOb(c, ts);
 
-    const cy = laneY(c.lane);
-    const overlapX = Math.abs(c.x - kite.x) < c.w * .40 + khw;
-    const overlapY = Math.abs(cy - kite.y) < c.h * .30 + khh;
+    const cy = laneY(c.lane) + c.oy + bobOf(c, ts);
+    const overlapX = Math.abs(c.x - kite.x) < c.cw + khw;
+    const overlapY = Math.abs(cy - kite.y) < c.ch + khh;
 
     if (overlapX && overlapY && invT <= 0 && !c.hit) {
       c.hit = true;
@@ -668,7 +765,7 @@ function gameStep(dt, ts) {
       addFloater('+1', kite.x + 60, kite.y - 50);
     }
   }
-  clouds = clouds.filter(c => {
+  obstacles = obstacles.filter(c => {
     if (c.hit) return c.dead !== true;          // removed by its own timer
     if (c.x < -c.w) { c.el.remove(); return false; }
     return true;

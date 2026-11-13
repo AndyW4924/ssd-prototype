@@ -1,10 +1,10 @@
-# Momo — Speech Sound Practice
+# Momo's Kite — fly with your mouth
 
-An interactive UI prototype for a **gamified speech sound disorder (SSD) home-practice product**, designed for a child around 3 years old. The goal: let a toddler *see* their own tongue position and self-correct, without a therapist in the room.
+An interactive UI prototype for a **gamified speech sound disorder (SSD) home-practice product**, aimed at a child around 3 years old.
 
-Built as a single-page, zero-build prototype. No framework, no dependencies, no bundler.
+Two pages, one game. The child holds a kite with Momo, and **flies it with their mouth**: open your mouth and the kite climbs, close it and the kite drifts down. The camera watches the mouth — no hands, no controller, no reading.
 
-> Screen size: **1280 × 800** (16:10 — one notch under a MacBook Air 13"). The stage auto-scales to any window while keeping that aspect ratio.
+> Screen size: **1280 × 800** (16:10 — one notch under a MacBook Air 13"). The stage auto-scales to any window while keeping that ratio.
 
 ---
 
@@ -16,87 +16,84 @@ open index.html        # macOS
 start index.html       # Windows
 ```
 
-Or serve it locally:
+Or serve it locally (needed on some browsers for camera access):
 
 ```bash
 python -m http.server 8000
 # → http://localhost:8000
 ```
 
-Deep links for presenting: `#gym`, `#say`, `#reward`, `#report`.
+Camera permission is requested when you press START. **Nothing is recorded or uploaded** — frames are processed in the page and thrown away.
 
 ---
 
-## The flow
+## The two pages
 
-| # | Screen | What happens |
-|---|--------|--------------|
-| 1 | **Home** | Momo greets the child, shows today's three missions and a streak badge. One big START button — no reading required beyond three words. |
-| 2 | **Tongue Gym** | The core self-correction loop (see below). |
-| 3 | **Say /a/** | Large mouth model to imitate, live waveform, hold-to-speak. Three attempts, star rating, feedback on tongue placement. |
-| 4 | **Reward** | Balls drop into the basket, confetti, a new sticker is unlocked. |
-| 5 | **Report** | Parent / SLP dashboard: practice minutes, placement accuracy, a 5-session accuracy trend, a tongue-contact map thumbnail, and an auto-generated clinical note. |
+**1 · Start** — Momo holds the kite on the left, string in hand. On the right: what the game is, the two rules (open = up, close = down), three lives, and one big START button. The camera warms up in the background so the countdown feels instant.
+
+**2 · Game** — a sky with **two tracks**. The kite takes off to the right and settles into its lane. Clouds scroll in as obstacles; a cloud in your lane costs a heart, three hearts ends the run. Momo stands at the bottom-left holding the string the whole time, and mirrors the player: his mouth opens when yours does, he shakes when the kite is hit, he bounces when a cloud is cleared.
+
+End of run → clouds dodged, best score (`localStorage`), fly again or go home.
 
 ---
 
-## Tongue Gym — the interesting part
+## How the mouth is detected
 
-Two panels, deliberately:
-
-- **Left — the mouth to copy.** A big, friendly open mouth with the tongue tip touching the alveolar ridge. This is *visual perceptual cueing*: the thing a 3-year-old **can** imitate.
-- **Right — the palate map.** The same movement seen from the sensor's point of view: the roof of the mouth, teeth at the top, and the child's tongue rendered as a blob that must travel into a target ring. This is the thing a child **cannot** see or feel — which is exactly what a chin-mounted ultrasound patch buys you.
-
-Press and hold the HOLD button:
-
-- the tongue blob travels from its resting position up to the dashed target
-- the progress ring fills **only while the blob is actually inside the target**, so releasing early lets it drift back
-- the coaching line updates live — "Almost — a little higher ↑" → "There! Hold it…" → "Yes! Perfect."
-
-Three exercises in sequence: **tip up**, **back up**, and a **front-to-back sweep** (follow the moving dot).
-
----
-
-## Why the design looks like this
-
-Three findings from the research deck drove the whole thing:
-
-1. **Immediate response is the gap.** Every competitor in the benchmark gives feedback after the session, not during it. So the coaching line, the ring, and the blob all react within a frame.
-2. **Customization is the second gap.** Hence three distinct exercises with per-exercise targets and a report that attributes errors to specific placements rather than a single score.
-3. **Biofeedback beats audio-only cueing.** Hence the split between "the mouth you can copy" and "the palate map you can't see" — the visual argument for why the hardware matters.
+- `getUserMedia` → `<video>` (mirrored, shown in the HUD bubble so the player can see they're tracked).
+- **MediaPipe FaceLandmarker** (face mesh, 478 landmarks) runs on the video at ~16 fps.
+- Openness = distance between the inner lips (landmarks **13** and **14**), normalised by face height (landmarks **10** → **152**). That makes it independent of how far the child sits from the lens.
+- Two thresholds with hysteresis — open above `0.055`, closed below `0.038` — so a wobbly toddler mouth doesn't flicker between lanes.
+- **Fallbacks:** hold `Space`, or press and hold anywhere in the field. Used automatically when the camera is denied, there's no camera, or the model can't load.
 
 ---
 
 ## Controls
 
-- Click / tap through the flow, or
-- `←` / `→` to move between screens, `1`–`5` to jump
-- **Press and hold** the HOLD button in Tongue Gym, or hold `Space`
-- Move the cursor around the home screen — Momo's pupils follow it
+| Input | Effect |
+|---|---|
+| Open mouth | kite flies up to the top track |
+| Close mouth | kite drifts down to the bottom track |
+| `Space` (hold) | same as opening the mouth, if there's no camera |
+| Press & hold the field | touch equivalent |
+| ← / START / Fly again | navigate |
+
+Debug/demo URLs: `?nointro` skips the countdown, `#game` deep-links straight into a run.
+
+---
+
+## Why the design looks like this
+
+- **The mouth is the controller.** For a 3-year-old, tapping a screen is a fine-motor task; opening the mouth is the thing being trained. The game mechanic *is* the exercise.
+- **Two lanes, not free flight.** A binary choice (open / shut) maps 1:1 onto the two tracks, so the child always knows what their mouth did — no ambiguous middle state to fail at.
+- **Momo mirrors the player.** Imitation is the strongest prompt at this age: the child sees a mouth doing what theirs should do, at the exact moment they do it. That is the "immediate response" the research deck found missing in every competitor.
+- **The HUD shows the camera.** Children (and parents) need proof the machine is watching, otherwise the cause–effect link breaks.
 
 ---
 
 ## What is simulated
 
-This is a UI prototype, not a working product:
+This is a UI prototype, not a shipping product:
 
-- **The sensor is faked.** Tongue position comes from the hold gesture, not from a real ultrasound patch.
-- **The report data is seeded demo data**, not measured.
-- **Microphone is real** on the Say screen *if* the browser grants permission; otherwise the waveform falls back to a synthetic animation.
+- Confidence in a cloud pass is not measured — the score is simply clouds cleared.
+- Difficulty ramps with score (speed 250 → 460 px/s); it is tuned by hand, not by the child's data.
+- No accounts, no storage beyond the local best score, no therapist view.
 
 ---
 
 ## Files
 
 ```
-index.html    markup for all five screens + SVG assets
-style.css     design system: tokens, layout, animations
-app.js        state machine, tongue-gym loop, canvas waveform, charts
+index.html    both pages + all SVG art + the face-landmarker module loader
+style.css     design tokens, layout, animations
+app.js        state, game loop, mouth detection glue, string physics
 ```
 
 ---
 
 ## 中文说明
 
-面向 3 岁左右儿童的**言语构音障碍（SSD）家庭训练**交互原型。核心是 "Tongue Gym"：左边是孩子**能模仿**的口腔动作，右边是孩子**看不到**的舌位传感图 —— 按住按钮，舌位光点移向目标圈，只有真正对上时进度环才增长，并实时给出"再高一点 ↑"这类提示。这正是调研里竞品的两个空白：**即时反馈**和**个性化**。
+面向 3 岁左右儿童的**言语构音障碍（SSD）家庭训练**交互原型，两个页面：起始页（Momo 牵着风筝 + START）与游戏页。
 
-纯前端单页，无构建步骤，1280×800 自适应缩放。传感器为模拟，报告数据为演示数据。
+玩法：风筝沿两条轨道向右飞，云朵作为障碍物迎面而来。**张嘴 → 风筝上升，闭嘴 → 风筝下降**，靠摄像头识别嘴部开合（MediaPipe FaceLandmarker，用内唇间距除以脸高做归一化，避免受距离影响）。三条命，撞云扣心。Momo 在左下角牵着线，并同步模仿玩家的嘴型、被撞时晃动、过关时弹跳。
+
+无摄像头或模型加载失败时自动退化为按住空格/按住画面。纯前端单页，无构建步骤，1280×800 自适应缩放。

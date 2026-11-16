@@ -74,7 +74,7 @@ A **flight rail** in the HUD carries a tiny kite marker from the hearts to a fin
 | Press & hold the field | touch equivalent |
 | ← / START / Fly again | navigate |
 
-Debug/demo URLs: `?nointro` skips the countdown, `#game` deep-links straight into a run.
+Debug/demo URLs: `?nointro` skips the countdown, `#game` deep-links straight into a run, `?run=15` shortens the flight (10–180 s) so you can see the ending without waiting a minute.
 ---
 
 ## Why the design looks like this

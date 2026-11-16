@@ -334,8 +334,8 @@ function toast(msg) {
    ============================================================ */
 const NOINTRO = /nointro/.test(location.search);   // skip the countdown (demos / screenshots)
 
-/* one run = 60 s of flying, in three legs */
-const RUN_TIME = 60;
+/* one run = 60 s of flying, in three legs  (?run=20 shortens it for demos) */
+const RUN_TIME = clamp(+((location.search.match(/[?&]run=(\d+)/) || [])[1] || 60), 10, 180);
 const ZONES = [
   { label: 'Meadow',       cue: 'open your mouth to climb, close it to sink.' },
   { label: 'Cloud canyon', cue: 'watch out for the balloons!' },

@@ -334,11 +334,23 @@ function toast(msg) {
    ============================================================ */
 const NOINTRO = /nointro/.test(location.search);   // skip the countdown (demos / screenshots)
 
+/* one run = 60 s of flying, in three legs */
+const RUN_TIME = 60;
+const ZONES = [
+  { label: 'Meadow',       cue: 'open your mouth to climb, close it to sink.' },
+  { label: 'Cloud canyon', cue: 'watch out for the balloons!' },
+  { label: 'Rainbow gate', cue: 'the rainbow is just ahead — keep going!' }
+];
+const zoneOf = t => (t / RUN_TIME > .66 ? 0 : t / RUN_TIME > .33 ? 1 : 2);
+
 const S = {
   screen: 'start',
   playing: false,
   hearts: 3,
   score: 0,
+  time: RUN_TIME,
+  zone: 0,
+  finishing: 0,
   best: +(localStorage.getItem('momo-kite-best') || 0)
 };
 
@@ -464,6 +476,21 @@ const gameOver  = $('#gameOver');
 const goScoreEl = $('#goScore');
 const goBestEl  = $('#goBest');
 const goMonster = $('#goMonster');
+const goSubEl   = $('#goSub');
+
+const gameWin   = $('#gameWin');
+const winKite   = $('#winKite');
+const winTitle  = $('#winTitle');
+const winSub    = $('#winSub');
+const winStars  = $('#winStars');
+const winScoreEl = $('#winScore');
+const winBestEl  = $('#winBest');
+
+const flFill  = $('#flFill');
+const flKite  = $('#flKite');
+const timeVal = $('#timeVal');
+const timeChip = $('#timeChip');
+let winT = 0;
 
 const kite = { y: 0, lane: 1, tilt: 0, x: 0 };   // lane 0 = top, 1 = bottom
 let takeoff = 0;                                 // 1 → 0 while the kite flies in from the left
@@ -494,13 +521,24 @@ function resetGame() {
   obstacles = [];
   reelAngle = 0;
   S.hearts = 3; S.score = 0; spawnT = 1.4; invT = 0; cheerT = 0; overT = 0;
+  S.time = RUN_TIME; S.zone = 0; S.finishing = 0;
   kite.lane = 1; kite.y = fieldH * LANE[1]; kite.tilt = 0; kite.x = KX;
   takeoff = 1;
   scoreEl.textContent = '0';
   bestChip.textContent = 'best ' + S.best;
   renderHearts();
+
+  clearTimeout(winT);
   gameOver.classList.remove('on');
-  $('#field').classList.remove('shake');
+  gameWin.classList.remove('on');
+  $$('i', winStars).forEach(s => s.classList.remove('on'));
+  momoEl.dataset.mood = 'idle';
+  const f = $('#field');
+  f.classList.remove('win', 'shake');
+  flFill.style.width = '0%';
+  flKite.style.left = '0%';
+  timeVal.textContent = RUN_TIME;
+  timeChip.classList.remove('low');
 }
 
 function renderHearts() {
@@ -632,8 +670,11 @@ async function enterGame() {
 
 function leaveGame() {
   S.playing = false;
+  S.finishing = 0;
+  clearTimeout(winT);
   getReady.classList.remove('on');
   gameOver.classList.remove('on');
+  gameWin.classList.remove('on');
 }
 
 function loseHeart() {
@@ -656,15 +697,59 @@ document.head.appendChild(st);
 
 function doGameOver() {
   S.playing = false;
-  sfxOver();
   if (S.score > S.best) {
     S.best = S.score;
     localStorage.setItem('momo-kite-best', S.best);
   }
   goScoreEl.textContent = S.score;
   goBestEl.textContent = 'best ' + S.best;
+  goSubEl.textContent = 'You flew ' + Math.round(RUN_TIME - S.time) + 's of ' + RUN_TIME + 's';
+  sfxOver();
   gameOver.classList.add('on');
   burstEl($('.go-card'), 18);
+}
+
+/* ---------- finish: 60 seconds survived ---------- */
+function doFinish() {
+  if (S.finishing) return;
+  S.finishing = 1;
+  S.playing = false;
+  S.time = 0;
+  invT = 0; cheerT = 0;
+  flFill.style.width = '100%';
+  flKite.style.left = '100%';
+  timeVal.textContent = '0';
+  timeChip.classList.remove('low');
+
+  sfxWin();
+  $('#field').classList.add('win');
+  momoEl.dataset.mood = 'cheer';
+
+  burstEl(kiteWrap, 22);
+  setTimeout(() => burst(rnd(200, 420), rnd(140, 280), 16), 340);
+  setTimeout(() => burst(rnd(620, 900), rnd(110, 240), 16), 560);
+  setTimeout(() => burst(rnd(380, 760), rnd(90, 200), 18), 900);
+
+  winT = setTimeout(showWinCard, 2100);
+}
+
+function showWinCard() {
+  const stars = 1 + (S.hearts >= 2 ? 1 : 0) + (S.hearts === 3 && S.score >= 20 ? 1 : 0);
+  if (S.score > S.best) {
+    S.best = S.score;
+    localStorage.setItem('momo-kite-best', S.best);
+  }
+  winTitle.textContent = stars === 3 ? 'Perfect flight!' : stars === 2 ? 'You made it!' : 'Kite is home!';
+  winSub.textContent = stars === 3
+    ? 'A whole minute in the sky without a single bump. Momo is SO proud!'
+    : stars === 2
+      ? 'Momo’s kite landed on Rainbow Hill. One more flight for three stars?'
+      : 'Momo’s kite landed on Rainbow Hill. Take a breath and let’s practise again.';
+  [...winStars.children].forEach((s, i) => s.classList.toggle('on', i < stars));
+  winScoreEl.textContent = S.score;
+  winBestEl.textContent = 'best ' + S.best;
+  gameWin.classList.add('on');
+  burstEl($('.win-card'), 26);
 }
 
 /* ---------- per-frame ---------- */
@@ -683,6 +768,24 @@ function addFloater(txt, x, y) {
 function gameStep(dt, ts) {
   if (S.screen !== 'game') return;
   if (!fieldW) measureField();
+
+  /* ---------- run clock: 60 s → finish ---------- */
+  if (S.playing) {
+    S.time = Math.max(0, S.time - dt);
+    const p = 1 - S.time / RUN_TIME;
+    flFill.style.width = (p * 100).toFixed(1) + '%';
+    flKite.style.left = (p * 100).toFixed(1) + '%';
+    timeVal.textContent = Math.ceil(S.time);
+    timeChip.classList.toggle('low', S.time <= 10);
+
+    const z = zoneOf(S.time);
+    if (z !== S.zone) {
+      S.zone = z;
+      toast(ZONES[z].label + ' — ' + ZONES[z].cue);
+      sfxPop();
+    }
+    if (S.time <= 0) doFinish();
+  }
 
   /* mouth state → lane */
   const open = mouthOpen();
@@ -703,15 +806,18 @@ function gameStep(dt, ts) {
     `rotate(${(reelAngle % 360).toFixed(1)} 395 178)`);
 
   /* kite element — x eases in from the left when a run starts */
-  if (takeoff > 0) takeoff = Math.max(0, takeoff - dt * 1.6);
-  kite.x = KX - fieldW * .26 * takeoff * takeoff;
-  kiteWrap.style.left = (kite.x / fieldW * 100) + '%';
-  const dy = kite.y - fieldH * .5 + Math.sin(ts / 1000 * 2.6) * 5;
-  kiteWrap.style.transform = `translateY(${dy}px)`;
-  kiteTilt.style.transform = `translate(-50%,-50%) rotate(${kite.tilt.toFixed(1)}deg)`;
+  if (!S.finishing) {
+    if (takeoff > 0) takeoff = Math.max(0, takeoff - dt * 1.6);
+    kite.x = KX - fieldW * .26 * takeoff * takeoff;
+    kiteWrap.style.left = (kite.x / fieldW * 100) + '%';
+    const dy = kite.y - fieldH * .5 + Math.sin(ts / 1000 * 2.6) * 5;
+    kiteWrap.style.transform = `translateY(${dy}px)`;
+    kiteTilt.style.transform = `translate(-50%,-50%) rotate(${kite.tilt.toFixed(1)}deg)`;
+  }
 
   /* momo mirrors the player */
-  if (invT > 0) momoEl.dataset.mood = 'hit';
+  if (S.finishing) momoEl.dataset.mood = 'cheer';
+  else if (invT > 0) momoEl.dataset.mood = 'hit';
   else if (cheerT > 0) momoEl.dataset.mood = 'cheer';
   else momoEl.dataset.mood = open ? 'open' : 'idle';
 
@@ -729,16 +835,17 @@ function gameStep(dt, ts) {
   invT = Math.max(0, invT - dt);
   cheerT = Math.max(0, cheerT - dt);
 
-  /* spawn */
+  /* spawn — difficulty climbs with flight progress, and the last seconds stay clear */
+  const prog = 1 - S.time / RUN_TIME;
   spawnT -= dt;
   if (spawnT <= 0) {
-    spawnObstacle();
-    const base = Math.max(.85, 1.55 - S.score * .02);
-    spawnT = rnd(base, base + .5);
+    if (S.time > 4) spawnObstacle();
+    const base = lerp(1.55, 1.02, prog);
+    spawnT = rnd(base, base + .45);
   }
 
   /* move obstacles */
-  const speed = Math.min(460, 250 + S.score * 6);
+  const speed = lerp(250, 390, prog);
   const khw = 40, khh = 36;
   for (const c of obstacles) {
     if (c.hit) continue;
@@ -784,6 +891,8 @@ $('#btnStart').onclick = () => { sfxPop(); go('game'); };
 $('#btnBack').onclick  = () => { sfxPop(); go('start'); };
 $('#btnAgain').onclick = () => { sfxPop(); gameOver.classList.remove('on'); enterGame(); };
 $('#btnHome').onclick  = () => { sfxPop(); go('start'); };
+$('#btnWinAgain').onclick = () => { sfxPop(); gameWin.classList.remove('on'); enterGame(); };
+$('#btnWinHome').onclick  = () => { sfxPop(); go('start'); };
 
 $$('.sound-toggle').forEach(b => {
   b.onclick = () => {
@@ -795,7 +904,10 @@ $$('.sound-toggle').forEach(b => {
 
 /* ---------------- boot ---------------- */
 $('#momoKite').innerHTML = momoKiteSVG();
+flKite.innerHTML = kiteSVG(20, false);
+winKite.innerHTML = kiteSVG(96, true);
 bestChip.textContent = 'best ' + S.best;
+timeVal.textContent = RUN_TIME;
 
 const hash0 = location.hash.replace('#', '');
 go(hash0 === 'game' ? 'game' : 'start');

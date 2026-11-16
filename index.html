@@ -40,7 +40,7 @@
             </div>
             <div class="how-row">
               <span class="how-ico">🎈</span>
-              <div><b>Dodge clouds &amp; balloons</b><i>little birds too · stay on the free track · 3 lives</i></div>
+              <div><b>Dodge clouds, balloons &amp; birds</b><i>3 lives · keep the kite flying for 60 seconds</i></div>
               <span class="how-hearts">♥♥♥</span>
             </div>
           </div>
@@ -65,7 +65,21 @@
         <div class="game-bar">
           <button class="icon-btn" id="btnBack" title="Back">←</button>
           <div class="hearts" id="hearts"><i class="on"></i><i class="on"></i><i class="on"></i></div>
-          <div class="grow"></div>
+
+          <!-- 60 s flight: progress toward Rainbow Hill -->
+          <div class="flight" id="flight">
+            <div class="fl-track">
+              <i class="fl-fill" id="flFill"></i>
+              <i class="fl-mark" style="left:33.333%"></i>
+              <i class="fl-mark" style="left:66.666%"></i>
+              <div class="fl-kite" id="flKite"></div>
+              <span class="fl-end" aria-hidden="true">
+                <svg viewBox="0 0 20 22"><path d="M4 21V3" stroke="#B9A2AC" stroke-width="2.4" stroke-linecap="round"/><path d="M4 4h11l-3 4 3 4H4z" fill="#FF6B9F"/></svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="time-chip" id="timeChip"><span>⏱</span><b id="timeVal">60</b></div>
           <div class="score-chip"><span>⭐</span><b id="scoreVal">0</b></div>
           <div class="best-chip" id="bestChip">best 0</div>
           <button class="icon-btn sound-toggle" title="Sound">🔊</button>
@@ -73,6 +87,7 @@
 
         <div class="field" id="field">
           <div class="sun"></div>
+          <div class="rainbow" id="rainbow" aria-hidden="true"></div>
 
           <!-- parallax background clouds -->
           <div class="bg-clouds" id="bgClouds"></div>
@@ -111,16 +126,33 @@
             </div>
           </div>
 
-          <!-- game over -->
+          <!-- game over (out of lives) -->
           <div class="gameover" id="gameOver">
             <div class="go-card">
               <div class="go-monster" id="goMonster"></div>
               <div class="go-title">Ouch!</div>
               <div class="go-score"><b id="goScore">0</b><span>obstacles dodged</span></div>
+              <div class="go-sub" id="goSub">You flew 0s of 60s</div>
               <div class="go-best" id="goBest">best 0</div>
               <div class="go-btns">
                 <button class="btn-again" id="btnAgain">Fly again</button>
                 <button class="btn-home" id="btnHome">Home</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- finish (60 s survived) -->
+          <div class="gameover win" id="gameWin">
+            <div class="go-card win-card">
+              <div class="win-badge" id="winKite"></div>
+              <div class="go-title" id="winTitle">You made it!</div>
+              <div class="win-sub" id="winSub">Momo's kite landed on Rainbow Hill.</div>
+              <div class="stars" id="winStars"><i>★</i><i>★</i><i>★</i></div>
+              <div class="go-score"><b id="winScore">0</b><span>obstacles dodged</span></div>
+              <div class="go-best" id="winBest">best 0</div>
+              <div class="go-btns">
+                <button class="btn-again" id="btnWinAgain">Fly again</button>
+                <button class="btn-home" id="btnWinHome">Home</button>
               </div>
             </div>
           </div>

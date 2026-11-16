@@ -205,6 +205,53 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 
 .grow{flex:1;}
 
+/* ---------------- flight progress (60 s) ---------------- */
+.flight{
+  position:relative;flex:1;height:34px;
+  display:flex;align-items:center;margin:0 8px 0 12px;
+}
+.fl-track{
+  position:relative;flex:1;height:9px;border-radius:999px;
+  background:#EFE2D9;
+  box-shadow:inset 0 1px 2px rgba(120,70,60,.14);
+}
+.fl-fill{
+  position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;
+  background:linear-gradient(90deg,#FFD04D,#FFB86B 40%,#FF8FB4 72%,#FF6B9F);
+  box-shadow:0 0 10px rgba(255,107,159,.35);
+  transition:width .2s linear;
+}
+.fl-mark{
+  position:absolute;top:-3px;width:2px;height:15px;border-radius:2px;
+  background:#fff;opacity:.95;
+}
+.fl-end{
+  position:absolute;right:-10px;top:-16px;width:20px;height:24px;display:block;
+}
+.fl-end svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 2px rgba(120,70,60,.2));}
+.fl-kite{
+  position:absolute;top:-13px;left:0;width:22px;height:22px;
+  transform:translateX(-50%);transition:left .2s linear;
+  display:grid;place-items:center;border-radius:50%;background:#fff;
+  box-shadow:0 2px 6px rgba(226,60,116,.3), 0 0 0 2px rgba(255,107,159,.32);
+}
+.fl-kite svg{width:15px;height:auto;display:block;}
+
+.time-chip{
+  display:flex;align-items:center;gap:5px;height:40px;padding:0 15px 0 12px;
+  border-radius:20px;background:#fff;box-shadow:0 5px 0 #EFE2D9;
+  font-family:var(--display);
+}
+.time-chip span{font-size:14px;opacity:.5;}
+.time-chip b{
+  font-size:21px;font-weight:800;min-width:30px;text-align:center;
+  font-variant-numeric:tabular-nums;color:var(--ink);
+}
+.time-chip.low b{color:var(--pink-d);}
+.time-chip.low span{opacity:.85;}
+.time-chip.low{animation:tick .9s ease-in-out infinite;}
+@keyframes tick{50%{transform:scale(1.06)}}
+
 .hearts{display:flex;gap:8px;margin-left:6px;}
 .hearts i{
   width:26px;height:26px;
@@ -244,7 +291,29 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
   position:absolute;right:70px;top:34px;width:92px;height:92px;border-radius:50%;
   background:radial-gradient(circle at 38% 34%, #FFF6C9, #FFD75E 68%, #FFC93B);
   box-shadow:0 0 0 16px rgba(255,214,90,.25), 0 0 0 34px rgba(255,214,90,.12);
+  transition:box-shadow .9s ease, transform .9s cubic-bezier(.2,.9,.3,1);
 }
+.field.win .sun{transform:scale(1.12);box-shadow:0 0 0 24px rgba(255,214,90,.3), 0 0 0 62px rgba(255,214,90,.16);}
+
+/* finishing rainbow — a distant ring sitting mostly below the field */
+.rainbow{
+  position:absolute;left:56%;bottom:-390px;width:680px;height:680px;border-radius:50%;
+  transform:translate(-50%,60px);opacity:0;pointer-events:none;
+  box-shadow:
+    0 0 0 11px rgba(255,107,159,.48),
+    0 0 0 22px rgba(255,168,92,.44),
+    0 0 0 33px rgba(255,208,77,.46),
+    0 0 0 44px rgba(79,194,107,.44),
+    0 0 0 55px rgba(111,198,245,.48);
+  filter:blur(1.2px);
+  transition:opacity 1s ease, transform 1.3s cubic-bezier(.2,.9,.3,1);
+}
+.field.win .rainbow{opacity:1;transform:translate(-50%,0);}
+.field.win #clouds{opacity:0;transition:opacity .9s ease;}
+.field.win .string-layer{opacity:0;transition:opacity .5s ease;}
+.field.win .cam-bubble{opacity:0;transition:opacity .6s ease;}
+.field.win .lane,
+.field.win .lane-divider{opacity:0;transition:opacity .6s ease;}
 
 /* parallax bg clouds */
 .bg-clouds i{
@@ -312,6 +381,21 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .kite-tilt svg{display:block;overflow:visible;animation:kBob 2.8s ease-in-out infinite;}
 .kite-wrap.blink .kite-tilt{animation:blink .3s steps(2) infinite;}
 @keyframes blink{50%{opacity:.25}}
+
+/* the kite sails off toward the rainbow when the run is complete */
+.field.win .kite-wrap{animation:kiteHome 2.1s cubic-bezier(.45,0,.35,1) forwards;}
+.field.win .kite-tilt svg{animation:none;}
+@keyframes kiteHome{
+  0%{opacity:1}
+  55%{opacity:1}
+  to{transform:translate(300px,-190px) scale(.45) rotate(10deg);opacity:0}
+}
+.field.win .momo-game svg{animation:momoHop .9s ease-in-out 2;}
+@keyframes momoHop{
+  0%,100%{transform:translateY(0)}
+  35%{transform:translateY(-20px) rotate(-2deg)}
+  65%{transform:translateY(-6px)}
+}
 
 /* string */
 .string-layer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
@@ -451,6 +535,46 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
   transition:transform .12s, box-shadow .12s;
 }
 .btn-home:active{transform:translateY(3px);box-shadow:0 2px 0 #EFE2D9;}
+
+/* tiny progress line inside the lose card */
+.go-sub{
+  margin-top:10px;font-weight:800;font-size:12.5px;letter-spacing:.2px;
+  color:var(--muted);
+}
+.go-sub + .go-best{margin-top:9px;}
+
+/* ---------------- finish card ---------------- */
+.gameover.win{
+  background:linear-gradient(180deg, rgba(255,247,229,.30), rgba(255,226,238,.40));
+  backdrop-filter:blur(2px);
+}
+.win-card{padding-top:34px;}
+.win-badge{
+  position:relative;width:152px;height:152px;margin-top:-112px;border-radius:50%;
+  background:radial-gradient(circle at 34% 26%, #FFF7D2, #FFD75E 60%, #FFC33B);
+  box-shadow:0 0 0 9px #fff, 0 22px 34px -16px rgba(232,166,43,.85);
+  display:grid;place-items:center;
+  animation:badgePop .65s cubic-bezier(.2,1.5,.4,1) both;
+}
+@keyframes badgePop{from{transform:scale(.4) rotate(-14deg);opacity:0}}
+.win-badge svg{width:96px;display:block;overflow:visible;filter:drop-shadow(0 4px 6px rgba(180,110,20,.25));}
+.win-sub{
+  margin-top:6px;font-weight:800;font-size:14px;color:var(--ink-2);
+  max-width:330px;line-height:1.4;
+}
+.stars{display:flex;gap:12px;margin-top:14px;}
+.stars i{
+  font-style:normal;font-size:36px;line-height:1;color:#EFE1D8;
+  text-shadow:0 2px 0 rgba(0,0,0,.04);
+  transition:color .2s;
+}
+.stars i.on{
+  color:#FFC93B;text-shadow:0 3px 0 #E8A62B, 0 8px 12px rgba(232,166,43,.35);
+  animation:starPop .5s cubic-bezier(.2,1.7,.4,1) both;
+}
+.stars i.on:nth-child(2){animation-delay:.14s;}
+.stars i.on:nth-child(3){animation-delay:.28s;}
+@keyframes starPop{from{transform:scale(.2) rotate(-40deg);opacity:0}}
 
 /* ---------------- fx / toast ---------------- */
 #fx{position:absolute;inset:0;pointer-events:none;z-index:20;}
